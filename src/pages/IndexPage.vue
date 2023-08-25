@@ -69,65 +69,6 @@ const initSearchParams = {
 const searchText = ref(route.query.text || "");
 
 /**
- * 加载数据
- * @param params
- */
-const loadDataOld = (params: any) => {
-  const postQuery = {
-    ...params,
-    searchText: params.text,
-  };
-  myAxios.post("post/list/page/vo", postQuery).then((res: any) => {
-    postList.value = res.records;
-  });
-
-  const userQuery = {
-    ...params,
-    userName: params.text,
-  };
-  myAxios.post("user/list/page/vo", userQuery).then((res: any) => {
-    userList.value = res.records;
-  });
-
-  const pictureQuery = {
-    ...params,
-    searchText: params.text,
-  };
-  myAxios.post("picture/list/page/vo", pictureQuery).then((res: any) => {
-    pictureList.value = res.records;
-  });
-};
-
-// onMounted(() => {
-//   const params = {
-//     // 其他参数
-//     // ...
-//     text: "", // searchText为空字符串
-//   };
-//   // 在页面加载时调用loadAllData函数
-//   loadAllData(params);
-// });
-
-/**
- * 加载聚合数据
- * @param params
- */
-const loadAllData = (params: any) => {
-  const query = {
-    ...params,
-    searchText: params.text,
-  };
-  myAxios.post("search/all", query).then((res: any) => {
-    console.log(res);
-    postList.value = res.postList;
-    userList.value = res.userList;
-    pictureList.value = res.pictureList;
-    videoList.value = res.videoList;
-    musicList.value = res.musicList;
-  });
-};
-
-/**
  * 加载单类数据
  * @param params
  */
@@ -158,12 +99,30 @@ const loadData = (params: any) => {
 
 const searchParams = ref(initSearchParams);
 
+// watchEffect(() => {
+//   searchParams.value = {
+//     ...initSearchParams,
+//     text: route.query.text,
+//     type: route.params.category,
+//   } as any;
+//   loadData(searchParams.value);
+// });
 watchEffect(() => {
-  searchParams.value = {
-    ...initSearchParams,
-    text: route.query.text,
-    type: route.params.category,
-  } as any;
+  // 判断是否是首次加载或者刷新页面
+  const isFirstLoad = !searchParams.value.text && !searchParams.value.type;
+  if (isFirstLoad) {
+    searchParams.value = {
+      ...initSearchParams,
+      text: route.query.text,
+      type: "post",
+    } as any;
+  } else {
+    searchParams.value = {
+      ...initSearchParams,
+      text: route.query.text,
+      type: route.params.category || "post",
+    } as any;
+  }
   loadData(searchParams.value);
 });
 
@@ -179,7 +138,12 @@ const onSearch = (value: string) => {
 const onTabChange = (key: string) => {
   router.push({
     path: `/${key}`,
-    query: searchParams.value,
+    // query: searchParams.value,
+    query: {
+      ...initSearchParams,
+      text: route.query.text,
+      type: `${key}`,
+    },
   });
 };
 </script>
